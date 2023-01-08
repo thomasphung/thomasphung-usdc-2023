@@ -506,17 +506,39 @@ function constructorTestRunner(testName, className, args, shouldPass) {
 }
 
 // Tests for Book class
+console.warn("Testing Book class");
 constructorTestRunner("bookConstructorTest", Book,
         [twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]], true);
 constructorTestRunner("bookEmptyContentTest", Book,["Example title", "9780000528531", []], true);
 
+constructorTestRunner("bookNoArgTest", Book, [], false);
+constructorTestRunner("bookNullArgTest", Book, [null, null, null], false);
+// Trying to hit as much code coverage as possible which is why passing different
+// combinations of arguments
+constructorTestRunner("bookNullArgTest", Book, [null, "9780000528531", []], false);
+constructorTestRunner("bookNullArgTest", Book, ["Example title", null, []], false);
+constructorTestRunner("bookNullArgTest", Book, ["Example title", "9780000528531", null], false);
+constructorTestRunner("bookUndefinedArgTest", Book, [undefined, undefined, undefined], false);
 constructorTestRunner("bookEmptyTitleTest", Book, ["", "9780000528531", []], false);
 constructorTestRunner("bookInvalidContentTest", Book, ["Example title", "9780000528531", ["Hello There"]], false);
+constructorTestRunner("bookInvalidISBNTest", Book, ["Example title", "1", []], false);
 
 if (Book.validateISBN("0000000000000")) {
-    console.log("PASS:", "bookISBNValidateTest");
+    console.log("PASS:", "book13DigitISBNValidateTest");
 } else {
-    console.error("FAIL:", "bookISBNValidateTest");
+    console.error("FAIL:", "book13DigitISBNValidateTest");
+}
+
+if (Book.validateISBN("0000000000")) {
+    console.log("PASS:", "book10DigitISBNValidateTest");
+} else {
+    console.error("FAIL:", "book10DigitISBNValidateTest");
+}
+
+if (!Book.validateISBN("123")) {
+    console.log("PASS:", "bookInvalidISBNValidateTest");
+} else {
+    console.error("FAIL:", "bookInvalidISBNValidateTest");
 }
 
 try {
@@ -526,24 +548,38 @@ try {
 }
 
 // Tests for PageLine class
+console.warn("Testing PageLine class");
 constructorTestRunner("pageLineConstructorTest", PageLine, [31, 8], false);
 
 // Tests for PageLineText class
+console.warn("Testing PageLineText class");
 constructorTestRunner("pageLineTextTest", PageLineText, [31, 8, "Example text"], true);
 constructorTestRunner("pageLineTextEmptyStringTest", PageLineText, [31, 8, ""], true);
 
 constructorTestRunner("pageLineTextNoArgTest", PageLineText, [], false);
 constructorTestRunner("pageLineTextNullArgTest", PageLineText, [null, null, null], false);
+constructorTestRunner("pageLineTextNullArgTest", PageLineText, [null, 8, "Example text"], false);
+constructorTestRunner("pageLineTextNullArgTest", PageLineText, [31, null, "Example text"], false);
+constructorTestRunner("pageLineTextNullArgTest", PageLineText, [31, 8, null], false);
 constructorTestRunner("pageLineTextUndefinedArgTest", PageLineText, [undefined, undefined, undefined], false);
-constructorTestRunner("pageLineTextInvalidPageNumTest", PageLineText, [-1, 8, "Example test"], false);
-constructorTestRunner("pageLineTextInvalidLineNumTest", PageLineText, [31, -1, "Example test"], false);
+constructorTestRunner("pageLineTextInvalidPageNumTest", PageLineText, [-1, 8, "Example text"], false);
+constructorTestRunner("pageLineTextInvalidLineNumTest", PageLineText, [31, -1, "Example text"], false);
 constructorTestRunner("pageLineTextInvalidTextTest", PageLineText, [31, -1, null], false);
 
+// Extremity tests
+constructorTestRunner("pageLinePage0Line1Test", PageLineText, [0, 1, ""], false);
+constructorTestRunner("pageLinePage1Line0Test", PageLineText, [1, 0, ""], false);
+constructorTestRunner("pageLinePage1LineMaxIntegerTest", PageLineText, [1, Number.MAX_SAFE_INTEGER, ""], true);
+
 // Tests for SearchResult class
+console.warn("Testing SearchResult class");
 constructorTestRunner("searchResultTest", SearchResult, [31, 8, "9780000528531"], true);
 
 constructorTestRunner("searchResultNoArgTest", SearchResult, [], false);
 constructorTestRunner("searchResultNullTest", SearchResult, [null, null, null], false);
+constructorTestRunner("searchResultNullTest", SearchResult, [null, 8, "978000052831"], false);
+constructorTestRunner("searchResultNullTest", SearchResult, [31, null, "978000052831"], false);
+constructorTestRunner("searchResultNullTest", SearchResult, [31, 8, null], false);
 constructorTestRunner("searchResultUndefinedTest", SearchResult, [undefined, undefined, undefined], false);
 constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, "978000052831"], false);
 constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, 9780000528531], false);
@@ -551,6 +587,7 @@ constructorTestRunner("searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9
 constructorTestRunner("searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
 
 // Tests for findSearchTermInBooks()
+console.warn("Testing findSearchTermInBooks()");
 const noResultTest = findSearchTermInBooks("Canadian", twentyLeaguesIn);
 if (noResultTest.Results.length === 0) {
     console.log("PASS: No result test");
