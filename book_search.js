@@ -23,44 +23,6 @@ function isNull(value) {
 }
 
 /**
- * Validates a JSON object to ensure it matches the definition of a JSON book object about scanned text.
- * @param {JSON} scannedTextObj - A JSON object representing the scanned text
- * @returns {boolean} - True if scannedTextObj represents a valid JSON object on scanned text; false otherwise
- */
-function validateBookObj(scannedTextObj) {
-    let requiredBookKeys = {
-        "Title": "string",
-        "ISBN": "string",
-        "Content": "object"
-    };
-
-    for (const [key, type] of Object.entries(requiredBookKeys)) {
-        let value = scannedTextObj[key];
-        if (isNull(value) || typeof(value) !== type) {
-            throw new Error(`${key} cannot contain a null value or has a value that isn't "${type}" type`)
-        }
-    }
-    
-    let requiredContentKeys = {
-        "Page": "number",
-        "Line": "number",
-        "Text": "string"
-    };
-
-    let contentValue = scannedTextObj["Content"];
-    for (const lineObj in contentValue) {
-        for (const [key, type] of Object.entries(requiredContentKeys)) {    
-            if (isNull(lineObj[key]) || typeof(lineObj[key]) !== type) {
-                throw new Error(`${JSON.stringify(lineObj)}: 
-                        ${key} cannot contain a null value or has a value that isn't "${type}" type`)
-            }
-        }
-    }
-
-    return true;
-}
-
-/**
  * Book class, represents a book with a registered ISBN that had zero or more of its pages scanned.
  * Assume book is written in the English language.
  */
@@ -344,7 +306,8 @@ class SearchResult extends PageLine {
     toJSON() {
         /**
          * This function is needed because in test cases, caller calls JSON.stringify()
-         * which would result in private properties being stringified in the wrong order.
+         * which would result in private properties being stringified in the wrong order
+         * (order of var declaration instead of the order as defined by product requirements).
          * E.g.
          * {
          *     #pageNum: 31,
