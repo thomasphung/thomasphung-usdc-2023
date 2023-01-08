@@ -69,8 +69,8 @@ class Book {
         }
         this.#isbn = isbn;
 
-        // Cannot assume Content entries are ordered in accordance to page number and line number
-        // I.e. table index may not represent ascending order of lines
+        // Cannot assume Content entries are ordered in accordance to page number and line number.
+        // I.e. table index may not represent ascending order of lines.
         for (const contentJSON of contentArr) {
             // Construct new PageLineText object to validate data in book Content
             const pageLineTextObj = new PageLineText(contentJSON["Page"], contentJSON["Line"], contentJSON["Text"]);
@@ -101,6 +101,9 @@ class Book {
      * @returns {boolean} - True if isbn is a valid ISBN with 10 or 13 digits and no delimiters; false otherwise
      */
     static validateISBN(isbn) {
+        if (typeof(isbn) !== "string") {
+            throw new Error("isbn must be of \"string\" type");
+        }
         const regex = new RegExp(/^\d{10}(\d{3})?$/);
         return regex.test(isbn);
     }
@@ -247,6 +250,9 @@ class PageLine {
      * @static
      */
     static #validatePageOrLineNum(pageOrLineNum) {
+        if (typeof(pageOrLineNum) !== "number") {
+            throw new Error("Page and/or line number must be a \"number\" type");
+        }
         return pageOrLineNum > 0 && (pageOrLineNum % 1 === 0);
     }
 
@@ -485,41 +491,64 @@ function constructorTestRunner(testName, className, args, shouldPass) {
     try {
         let newObj = new className(...args);
         if (shouldPass) {
-            console.log("PASS:", testName, JSON.stringify(newObj));
+            console.log("PASS:", testName, "|", JSON.stringify(newObj), "|", ...args);
         } else {
-            console.log("FAIL:", testName, "Should not be instantiated with these arguments:", ...args)
+            console.error("FAIL:", testName, "|", 
+                    `${className} should not be instantiated with these arguments:`, ...args);
         }
     } catch(e) {
         if (!shouldPass) {
-            console.log("PASS:", testName);
+            console.log("PASS:", testName, "|", e.toString());
         } else {
-            console.log("FAIL:", testName, e);
+            console.error("FAIL:", testName, "|", e);
         }
     }
 }
 
 // Tests for Book class
-const bookConstructorTest = new Book(
-        twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]);
-console.log("PASS: Book class instantiation test");
+constructorTestRunner("bookConstructorTest", Book,
+        [twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]], true);
+constructorTestRunner("bookEmptyContentTest", Book,["Example title", "9780000528531", []], true);
 
-// Tests for PageLine class
-try {
-    const pageLineConstructorTest = new PageLine(31, 8);
-} catch(e) {
-    console.log("PASS: PageLine abstract class no instantiation test");
+constructorTestRunner("bookEmptyTitleTest", Book, ["", "9780000528531", []], false);
+constructorTestRunner("bookInvalidContentTest", Book, ["Example title", "9780000528531", ["Hello There"]], false);
+
+if (Book.validateISBN("0000000000000")) {
+    console.log("PASS:", "bookISBNValidateTest");
+} else {
+    console.error("FAIL:", "bookISBNValidateTest");
 }
 
+try {
+    Book.validateISBN(9780000528531);
+} catch(e) {
+    console.log("PASS:", "bookISBNValidateNumberTest", "|", e.toString());
+}
+
+// Tests for PageLine class
+constructorTestRunner("pageLineConstructorTest", PageLine, [31, 8], false);
+
 // Tests for PageLineText class
-const pageLineTextConstructorTest = new PageLineText(31, 8, "Example text");
-console.log("PASS: PageLineText class instantiation test");
+constructorTestRunner("pageLineTextTest", PageLineText, [31, 8, "Example text"], true);
+constructorTestRunner("pageLineTextEmptyStringTest", PageLineText, [31, 8, ""], true);
+
+constructorTestRunner("pageLineTextNoArgTest", PageLineText, [], false);
+constructorTestRunner("pageLineTextNullArgTest", PageLineText, [null, null, null], false);
+constructorTestRunner("pageLineTextUndefinedArgTest", PageLineText, [undefined, undefined, undefined], false);
+constructorTestRunner("pageLineTextInvalidPageNumTest", PageLineText, [-1, 8, "Example test"], false);
+constructorTestRunner("pageLineTextInvalidLineNumTest", PageLineText, [31, -1, "Example test"], false);
+constructorTestRunner("pageLineTextInvalidTextTest", PageLineText, [31, -1, null], false);
 
 // Tests for SearchResult class
-constructorTestRunner("searchResultConstructorTest", SearchResult, [31, 8, "9780000528531"], true);
+constructorTestRunner("searchResultTest", SearchResult, [31, 8, "9780000528531"], true);
+
 constructorTestRunner("searchResultNoArgTest", SearchResult, [], false);
-constructorTestRunner( "searchResultInvalidISBNTest", SearchResult, [31, 8, "978000052831"], false);
-constructorTestRunner( "searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9780000528531"], false);
-constructorTestRunner( "searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
+constructorTestRunner("searchResultNullTest", SearchResult, [null, null, null], false);
+constructorTestRunner("searchResultUndefinedTest", SearchResult, [undefined, undefined, undefined], false);
+constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, "978000052831"], false);
+constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, 9780000528531], false);
+constructorTestRunner("searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9780000528531"], false);
+constructorTestRunner("searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
 
 // Tests for findSearchTermInBooks()
 const noResultTest = findSearchTermInBooks("Canadian", twentyLeaguesIn);
