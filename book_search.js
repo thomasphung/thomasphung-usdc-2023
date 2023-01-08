@@ -69,7 +69,8 @@ class Book {
     #title;
     #isbn;
     /**
-     * 2D array, first index represents page number and second index represents line number.
+     * 2D array, an array of arrays of PageLineText objects 
+     * First index represents page number and second index represents line number.
      * Okay if elements are not contiguous; iterate by Object.keys in ascending order.
      * 
      * Opting to store contents in objects (dictionary-like) instead of arrays since the latter will
@@ -138,7 +139,7 @@ class Book {
      * @returns {boolean} - True if isbn is a valid ISBN with 10 or 13 digits and no delimiters; false otherwise
      */
     static validateISBN(isbn) {
-        const regex = new RegExp("^\d{10}(\d{3})?$");
+        const regex = new RegExp(/^\d{10}(\d{3})?$/);
         return regex.test(isbn);
     }
 
@@ -172,7 +173,7 @@ class Book {
      * @returns {object} - Array of successful matches
      */
     searchForTerm(searchTerm) {
-        let resultArr = {};
+        let resultArr = [];
 
         // Cannot assume Object.keys are ordered in ascending alphanumerical order.
         // Though in modern ECMAScript specification, all non-negative integer keys are
@@ -187,13 +188,13 @@ class Book {
         let pageNumArr = Object.keys(this.#contentArr);
         pageNumArr = pageNumArr.sort(comparator);
 
-        for (const pageNum in pageNumArr) {
+        for (const pageNum of pageNumArr) {
             let lineNumArr = Object.keys(this.#contentArr[pageNum]);
             lineNumArr = lineNumArr.sort(comparator);
 
-            for (const lineNum in lineNumArr) {
-                let lineText = this.#contentArr[pageNum][lineNum];
-
+            for (const lineNum of lineNumArr) {
+                let lineText = this.#contentArr[pageNum][lineNum].text;
+                
                 if (lineText.includes(searchTerm)) {
                     resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
                 } else if (lineText.endsWith("-") &&
@@ -261,10 +262,10 @@ class PageLine {
         if (this.constructor === PageLine) {
             throw new Error("Abstract classes cannot be instantiated.");
         }
-        if (PageLine.#validatePageOrLineNum(pageNum)) {
+        if (!PageLine.#validatePageOrLineNum(pageNum)) {
             throw new Error("Page number must be a non-zero, positive integer");
         }
-        if (PageLine.#validatePageOrLineNum(lineNum)) {
+        if (!PageLine.#validatePageOrLineNum(lineNum)) {
             throw new Error("Line number must be a non-zero, positive integer");
         }
 
@@ -279,7 +280,7 @@ class PageLine {
      * @static
      */
     static #validatePageOrLineNum(pageOrLineNum) {
-        return pageOrLineNum > 0 && pageOrLineNum % 1 === 0;
+        return pageOrLineNum > 0 && (pageOrLineNum % 1 === 0);
     }
 
     /**
@@ -360,7 +361,7 @@ class PageLineText extends PageLine {
 /**
  * Searches for matches in scanned text.
  * @param {string} searchTerm - The word or term we're searching for. 
- * @param {JSON} scannedTextObj - A JSON object representing the scanned text.
+ * @param {JSON} scannedTextObj - A JSON object representing the scanned text. Will not be modified.
  * @returns {JSON} - Search results.
  */
  function findSearchTermInBooks(searchTerm, scannedTextObj) {
@@ -385,7 +386,7 @@ class PageLineText extends PageLine {
         "Results": []
     };
 
-    for (const bookJSON in scannedTextObj) {
+    for (const bookJSON of scannedTextObj) {
         const bookObj = new Book(bookJSON["Title"], bookJSON["ISBN"], bookJSON["Content"]);
         resultJSON.Results.concat(bookObj.searchForTerm(searchTerm));
     }
