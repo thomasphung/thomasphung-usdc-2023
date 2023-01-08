@@ -161,8 +161,7 @@ class Book {
 
             for (const lineNum of lineNumArr) {
                 let lineText = this.#contentArr[pageNum][lineNum].text;
-                console.log(lineText);
-                console.log(regex.test(lineText));
+                
                 if (regex.test(lineText)) {
                     resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
                 } else if (lineText.endsWith("-") &&
@@ -180,7 +179,6 @@ class Book {
                 }
             }
         }
-        console.log(resultArr);
         return resultArr;
     }
 
@@ -476,25 +474,52 @@ if (test2result.Results.length == 1) {
     console.log("Received:", test2result.Results.length);
 }
 
+/**
+ * Helper method for running tests on a class constructor.
+ * @param {string} testName - Name of test
+ * @param {object} className - Class name
+ * @param {object} args - Array of arguments to pass to constructor in the order they are stored
+ * @param {boolean} shouldPass - True if test is supposed to pass; false otherwise
+ */
+function constructorTestRunner(testName, className, args, shouldPass) {
+    try {
+        let newObj = new className(...args);
+        if (shouldPass) {
+            console.log("PASS:", testName, JSON.stringify(newObj));
+        } else {
+            console.log("FAIL:", testName, "Should not be instantiated with these arguments:", ...args)
+        }
+    } catch(e) {
+        if (!shouldPass) {
+            console.log("PASS:", testName);
+        } else {
+            console.log("FAIL:", testName, e);
+        }
+    }
+}
+
 // Tests for Book class
 const bookConstructorTest = new Book(
         twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]);
-console.log("PASS: Book class instantiated");
+console.log("PASS: Book class instantiation test");
 
 // Tests for PageLine class
 try {
     const pageLineConstructorTest = new PageLine(31, 8);
 } catch(e) {
-    console.log("PASS: PageLine abstract class cannot be instantiated");
+    console.log("PASS: PageLine abstract class no instantiation test");
 }
 
 // Tests for PageLineText class
 const pageLineTextConstructorTest = new PageLineText(31, 8, "Example text");
-console.log("PASS: PageLineText class instantiated");
+console.log("PASS: PageLineText class instantiation test");
 
 // Tests for SearchResult class
-const searchResultConstructorTest = new SearchResult(31, 8, "9780000528531");
-console.log("PASS: SearchResult class instantiated");
+constructorTestRunner("searchResultConstructorTest", SearchResult, [31, 8, "9780000528531"], true);
+constructorTestRunner("searchResultNoArgTest", SearchResult, [], false);
+constructorTestRunner( "searchResultInvalidISBNTest", SearchResult, [31, 8, "978000052831"], false);
+constructorTestRunner( "searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9780000528531"], false);
+constructorTestRunner( "searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
 
 // Tests for findSearchTermInBooks()
 const noResultTest = findSearchTermInBooks("Canadian", twentyLeaguesIn);
@@ -502,6 +527,6 @@ if (noResultTest.Results.length === 0) {
     console.log("PASS: No result test");
 } else {
     console.log("FAIL: No result test");
-    console.log("Expected:", 0),
-    console.log("Received:", noResultTest.Results.length); 
+    console.log("Expected:", JSON.stringify([])),
+    console.log("Received:", JSON.stringify(noResultTest.Results));
 }
