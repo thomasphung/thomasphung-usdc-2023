@@ -336,6 +336,28 @@ class SearchResult extends PageLine {
     get isbn() {
         return this.#isbn;
     }
+
+    /**
+     * Converts SearchResult object to JSON format.
+     * @returns {object} - JSON format of object
+     */
+    toJSON() {
+        /**
+         * This function is needed because in test cases, caller calls JSON.stringify()
+         * which would result in private properties being stringified in the wrong order.
+         * E.g.
+         * {
+         *     #pageNum: 31,
+         *     #lineNum: 9,
+         *     #isbn: "9780000528531"
+         * }
+         */
+        return {
+            "ISBN": this.#isbn,
+            "Page": this.page,
+            "Line": this.line
+        };
+    }
 }
 
 /**
@@ -362,6 +384,18 @@ class PageLineText extends PageLine {
      */
     get text() {
         return this.#text;
+    }
+
+    /**
+     * Converts PageLineText object to JSON format.
+     * @returns {object} - JSON format of object
+     */
+    toJSON() {
+        return {
+            "Page": this.page,
+            "Line": this.line,
+            "Text": this.#text
+        };
     }
 }
 
