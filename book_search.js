@@ -174,6 +174,11 @@ class Book {
      */
     searchForTerm(searchTerm) {
         let resultArr = [];
+        // Issue with security if user puts in a searchTerm with regex tokens,
+        // must escape these tokens
+        // @todo Periods and asterisks may be treated as wildcards
+        let escapedSearchTerm = JSON.stringify(searchTerm).slice(1, -1);
+        let regex = new RegExp(`(${searchTerm})`);
 
         // Cannot assume Object.keys are ordered in ascending alphanumerical order.
         // Though in modern ECMAScript specification, all non-negative integer keys are
@@ -194,8 +199,9 @@ class Book {
 
             for (const lineNum of lineNumArr) {
                 let lineText = this.#contentArr[pageNum][lineNum].text;
-                
-                if (lineText.includes(searchTerm)) {
+                console.log(lineText);
+                console.log(regex.test(lineText));
+                if (regex.test(lineText)) {
                     resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
                 } else if (lineText.endsWith("-") &&
                         this.#searchForLineBreakedTerm(searchTerm, lineText, this.#contentArr[pageNum][lineNum + 1])) {
@@ -212,6 +218,7 @@ class Book {
                 }
             }
         }
+        console.log(resultArr);
         return resultArr;
     }
 
@@ -381,15 +388,20 @@ class PageLineText extends PageLine {
         throw new Error("scannedTextObj must be an \"object\" type and not a null value");
     }
 
-    let resultJSON = {
-        "SearchTerm": searchTerm,
-        "Results": []
-    };
+    let overallResultArr = [];
 
+    // Iterating over each distinct book scanned to find the search term in scanned lines
+    // Assume a single book does not have repeated entries in JSON
     for (const bookJSON of scannedTextObj) {
         const bookObj = new Book(bookJSON["Title"], bookJSON["ISBN"], bookJSON["Content"]);
-        resultJSON.Results.concat(bookObj.searchForTerm(searchTerm));
+        let resultArr = bookObj.searchForTerm(searchTerm);
+        overallResultArr = overallResultArr.concat(resultArr);
     }
+
+    let resultJSON = {
+        "SearchTerm": searchTerm,
+        "Results": overallResultArr
+    };
 
     return resultJSON;
 }
@@ -468,16 +480,31 @@ if (test2result.Results.length == 1) {
 }
 
 // Tests for Book class
-const bookConstructorTest = new Book(twentyLeaguesIn["Title"], twentyLeaguesIn["ISBN"], twentyLeaguesIn["Content"]);
+const bookConstructorTest = new Book(
+        twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]);
+console.log("PASS: Book class instantiated");
 
 // Tests for PageLine class
-const pageLineConstructorTest = new PageLine(31, 8);
+try {
+    const pageLineConstructorTest = new PageLine(31, 8);
+} catch(e) {
+    console.log("PASS: PageLine abstract class cannot be instantiated");
+}
 
 // Tests for PageLineText class
 const pageLineTextConstructorTest = new PageLineText(31, 8, "Example text");
+console.log("PASS: PageLineText class instantiated");
 
 // Tests for SearchResult class
 const searchResultConstructorTest = new SearchResult(31, 8, "9780000528531");
+console.log("PASS: SearchResult class instantiated");
 
 // Tests for findSearchTermInBooks()
-
+const noResultTest = findSearchTermInBooks("Canadian", twentyLeaguesIn);
+if (noResultTest.Results.length === 0) {
+    console.log("PASS: No result test");
+} else {
+    console.log("FAIL: No result test");
+    console.log("Expected:", 0),
+    console.log("Received:", noResultTest.Results.length); 
+}
