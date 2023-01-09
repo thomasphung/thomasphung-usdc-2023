@@ -23,10 +23,14 @@ function isNull(value) {
 }
 
 /**
- * Book class, represents a book with a registered ISBN that had zero or more of its pages scanned.
- * Assume book is written in the English language and grammar, written left-to-right and top-to-down.
- * A book can be defined as an object with 1 or more pages with each page containing 1 or more lines of text.
- * A line of text contains multiple words that are separated by a space or a punctuation mark and a space.
+ * Book class, represents a book with a registered ISBN that had 
+ * zero or more of its pages scanned.
+ * Assume book is written in the English language and grammar, 
+ * written left-to-right and top-to-down.
+ * A book can be defined as an object with 1 or more pages with each 
+ * page containing 1 or more lines of text.
+ * A line of text contains multiple words that are separated by a space or 
+ * a punctuation mark and a space.
  * A line of text can be empty, signifying whitespace for formatting.
  */
 class Book {
@@ -38,10 +42,12 @@ class Book {
      * First index represents page number and second index represents line number.
      * Okay if elements are not contiguous; iterate by Object.keys in ascending order.
      * 
-     * Opting to store contents in objects (dictionary-like) instead of arrays since the latter will
-     * allocate additional indexes in memory even if not in use to maintain contiguous nature of arrays.
-     * This may be an issue for iterating since scanned pages may follow an arbitrary order.
-     * We can have a book that only has page 1 and page 2000 scanned, requiring iteration over 1999 empty indexes.
+     * Opting to store contents in objects (dictionary-like) instead of arrays 
+     * since the latter will allocate additional indexes in memory even if not in 
+     * use to maintain contiguous nature of arrays. This may be an issue for 
+     * iterating since scanned pages may follow an arbitrary order.
+     * We can have a book that only has page 1 and page 2000 scanned, 
+     * requiring iteration over 1999 empty indexes.
      */
     #contentArr = {};
 
@@ -63,13 +69,16 @@ class Book {
      */
     constructor(title, isbn, contentArr) {
         if (isNull(title) || typeof(title) !== "string") {
-            throw new Error("title cannot contain a null value or has a value that isn't of \"string\" type");
+            throw new Error(
+                    "title cannot contain a null value or has a value that isn't of \"string\" type");
         }
         if (isNull(isbn) || typeof(isbn) !== "string") {
-            throw new Error("isbn cannot contain a null value or has a value that isn't of \"string\" type");
+            throw new Error(
+                    "isbn cannot contain a null value or has a value that isn't of \"string\" type");
         }
         if (isNull(contentArr) || typeof(contentArr) !== "object") {
-            throw new Error("contentArr cannot contain a null value or has a value that isn't of \"object\" type");
+            throw new Error(
+                    "contentArr cannot contain a null value or has a value that isn't of \"object\" type");
         }
 
         if (title === "") {
@@ -86,7 +95,8 @@ class Book {
         // I.e. table index may not represent ascending order of lines.
         for (const contentJSON of contentArr) {
             // Construct new PageLineText object to validate data in book Content
-            const pageLineTextObj = new PageLineText(contentJSON["Page"], contentJSON["Line"], contentJSON["Text"]);
+            const pageLineTextObj = new PageLineText(
+                    contentJSON["Page"], contentJSON["Line"], contentJSON["Text"]);
             let pageNum = pageLineTextObj.page;
             let lineNum = pageLineTextObj.line;
 
@@ -95,11 +105,13 @@ class Book {
                 this.#contentArr[pageNum] = {};
             }
 
-            // We want page and line number combination to be unique identifier to a particular line of text.
-            // If there is another text entry with the same page and line number, then there is probably an 
+            // We want page and line number combination to be unique 
+            // identifier to a particular line of text.
+            // If there is another text entry with the same page and 
+            // line number, then there is probably an 
             // issue upstream with how data is processed.
-            // Don't want to assume behavior like overriding existing entry with newer one so error throwing
-            // is a safer solution.
+            // Don't want to assume behavior like overriding 
+            // existing entry with newer one so error throwing is a safer solution.
             if (!isNull(this.#contentArr[pageNum][lineNum])) {
                 throw new Error(`Duplicate text entry on page #${pageNum}, line #${lineNum}`);
             }
@@ -109,11 +121,13 @@ class Book {
     }
 
     /**
-     * Validates ISBN based on official ISBN spec.
-     * Static function since its purpose is independent of Book object but is within scope of books.
+     * Validates computer-readable ISBN based on official ISBN spec.
+     * Static function since its purpose is independent 
+     * of Book object but is within scope of books.
      * (i.e. don't need to instantiate a book object to validate ISBN values)
      * @param {string} isbn - ISBN
-     * @returns {boolean} - True if isbn is a valid ISBN with 10 or 13 digits and no delimiters; false otherwise
+     * @returns {boolean} - True if isbn is a valid ISBN with 10 or 13 digits 
+     * and no delimiters; false otherwise
      */
     static validateISBN(isbn) {
         if (typeof(isbn) !== "string") {
@@ -195,39 +209,50 @@ class Book {
         // phrase like "Hello World".
         // Else statement tries to see if search term is hyphen-breaked
         if (wordArr.includes(searchTerm)) {
-            resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
+            resultArr.push(new SearchResult(
+                    pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
         } else if (searchTerm.includes(" ") && lineText.includes(searchTerm)) {
-            resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
+            resultArr.push(new SearchResult(
+                    pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
         } else {
-            // Note that Object[1] is the same as Object["1"] since property names are stored as strings
-            let subsequentLine = this.#contentArr[pageLineTextObj.page][pageLineTextObj.line + 1];
+            // Note that Object[1] is the same as Object["1"] since 
+            // property names are stored as strings
+            let subsequentLine = 
+                    this.#contentArr[pageLineTextObj.page][pageLineTextObj.line + 1];
             let subsequentLineText = null;
             if (!isNull(subsequentLine)) {
                 subsequentLineText = subsequentLine.text;
             }
 
-            if (this.#searchForLineBreakedTerm(searchTerm, lineText, subsequentLineText)) {
+            if (this.#searchForLineBreakedTerm(
+                    searchTerm, lineText, subsequentLineText
+                )) {
                 /**
-                 * If there is a word that wraps to the next line (i.e. is hyphen-breaked),
-                 * perform a look ahead check.
+                 * If there is a word that wraps to the next line 
+                 * (i.e. is hyphen-breaked), perform a look ahead check.
                  * 
                  * If the word wraps to the first line of the next page, then
-                 * currently there is no way to confirm if this is the case with current knowledge
-                 * (e.g. we don't know the max number of lines on a page, there is no data that
-                 * maps to this or we can derive from)
+                 * currently there is no way to confirm if this is the case 
+                 * with current knowledge (e.g. we don't know the max number 
+                 * of lines on a page, there is no data that maps to this 
+                 * or we can derive from)
                  */
-                resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
-                resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line + 1, this.#isbn));
+                resultArr.push(new SearchResult(
+                        pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
+                resultArr.push(new SearchResult(
+                        pageLineTextObj.page, pageLineTextObj.line + 1, this.#isbn));
             }
         }
     }
 
     /**
-     * Helper method to find a search term that is line-breaked across two lines with a hyphen.
+     * Helper method to find a search term that is line-breaked across 
+     * two lines with a hyphen.
      * @param {string} searchTerm - Term to be searched in book text, case-sensitive
      * @param {string} currentLineText - Current line text
      * @param {string} subsequentLineText - Line text following the current
-     * @returns {boolean} - True if search term does span across two lines; false otherwise
+     * @returns {boolean} - True if search term does span across two lines; 
+     * false otherwise
      */
     #searchForLineBreakedTerm(searchTerm, currentLineText, subsequentLineText) {
         // It is possible that subsequent line is not scanned (undefined)
@@ -236,7 +261,7 @@ class Book {
         }
 
         let lineEnd = currentLineText.match(this.#WORD_REGEX).pop()?.replace("-", "");
-        console.log(lineEnd);
+
         // If current line of text ends with a substring of first part of search term
         // and next line of text starts with the rest of search term, that means
         // we found a word that has been hyphen-breaked
@@ -329,7 +354,8 @@ class PageLine {
 }
 
 /**
- * SearchResult class represents a successful match of a search term within a line on a book's page.
+ * SearchResult class represents a successful match of a search term within a 
+ * line on a book's page.
  */
 class SearchResult extends PageLine {
     #isbn;
@@ -344,7 +370,8 @@ class SearchResult extends PageLine {
         super(pageNum, lineNum);
 
         if (!Book.validateISBN(isbn)) {
-            throw new Error("Invalid ISBN value; must be a 10 or 13 digit string with no delimiters");
+            throw new Error(
+                    "Invalid ISBN value; must be a 10 or 13 digit string with no delimiters");
         }
 
         this.#isbn = isbn;
@@ -364,9 +391,11 @@ class SearchResult extends PageLine {
      */
     toJSON() {
         /**
-         * This function is needed because in test cases, caller calls JSON.stringify()
-         * which would result in private properties being stringified in the wrong order
-         * (order of var declaration instead of the order as defined by product requirements).
+         * This function is needed because in test cases, 
+         * caller calls JSON.stringify() which would result 
+         * in private properties being stringified in the wrong order
+         * (order of var declaration instead of the order 
+         * as defined by product requirements).
          * E.g.
          * {
          *     #pageNum: 31,
@@ -396,7 +425,8 @@ class PageLineText extends PageLine {
      */
     constructor(pageNum, lineNum, text) {
         super(pageNum, lineNum);
-        // Note that it is possible for a line to be empty (e.g. just whitespace for formatting)
+        // Note that it is possible for a line to be empty 
+        // (e.g. just whitespace for formatting)
         this.#text = text.trim();
     }
 
@@ -424,7 +454,8 @@ class PageLineText extends PageLine {
 /**
  * Searches for matches in scanned text.
  * @param {string} searchTerm - The word or term we're searching for. 
- * @param {JSON} scannedTextObj - A JSON object representing the scanned text. Will not be modified.
+ * @param {JSON} scannedTextObj - A JSON object representing the scanned text. 
+ * Will not be modified.
  * @returns {JSON} - Search results.
  */
  function findSearchTermInBooks(searchTerm, scannedTextObj) {
@@ -539,7 +570,8 @@ if (test2result.Results.length == 1) {
  * Helper method for running tests on a class constructor.
  * @param {string} testName - Name of test
  * @param {object} className - Class name
- * @param {object} args - Array of arguments to pass to constructor in the order they are stored
+ * @param {object} args - Array of arguments to pass to constructor 
+ * in the order they are stored
  * @param {boolean} shouldPass - True if test is supposed to pass; false otherwise
  */
 function constructorTestRunner(testName, className, args, shouldPass) {
@@ -563,8 +595,14 @@ function constructorTestRunner(testName, className, args, shouldPass) {
 
 // Tests for Book class
 console.warn("Testing Book class");
-constructorTestRunner("bookConstructorTest", Book,
-        [twentyLeaguesIn[0]["Title"], twentyLeaguesIn[0]["ISBN"], twentyLeaguesIn[0]["Content"]], true);
+constructorTestRunner(
+        "bookConstructorTest",
+        Book,
+        [twentyLeaguesIn[0]["Title"], 
+        twentyLeaguesIn[0]["ISBN"], 
+        twentyLeaguesIn[0]["Content"]],
+        true
+    );
 constructorTestRunner("bookEmptyContentTest", Book,["Example title", "9780000528531", []], true);
 
 constructorTestRunner("bookNoArgTest", Book, [], false);
@@ -576,7 +614,12 @@ constructorTestRunner("bookNullArgTest", Book, ["Example title", null, []], fals
 constructorTestRunner("bookNullArgTest", Book, ["Example title", "9780000528531", null], false);
 constructorTestRunner("bookUndefinedArgTest", Book, [undefined, undefined, undefined], false);
 constructorTestRunner("bookEmptyTitleTest", Book, ["", "9780000528531", []], false);
-constructorTestRunner("bookInvalidContentTest", Book, ["Example title", "9780000528531", ["Hello There"]], false);
+constructorTestRunner(
+        "bookInvalidContentTest",
+        Book,
+        ["Example title", "9780000528531", ["Hello There"]],
+        false
+    );
 constructorTestRunner("bookInvalidISBNTest", Book, ["Example title", "1", []], false);
 
 // Tests for static ISBN validation function
@@ -621,18 +664,24 @@ constructorTestRunner("pageLineTextEmptyStringTest", PageLineText, [31, 8, ""], 
 
 constructorTestRunner("pageLineTextNoArgTest", PageLineText, [], false);
 constructorTestRunner("pageLineTextNullArgTest", PageLineText, [null, null, null], false);
-constructorTestRunner("pageLineTextNullArgTest", PageLineText, [null, 8, "Example text"], false);
-constructorTestRunner("pageLineTextNullArgTest", PageLineText, [31, null, "Example text"], false);
+constructorTestRunner(
+        "pageLineTextNullArgTest", PageLineText, [null, 8, "Example text"], false);
+constructorTestRunner(
+        "pageLineTextNullArgTest", PageLineText, [31, null, "Example text"], false);
 constructorTestRunner("pageLineTextNullArgTest", PageLineText, [31, 8, null], false);
-constructorTestRunner("pageLineTextUndefinedArgTest", PageLineText, [undefined, undefined, undefined], false);
-constructorTestRunner("pageLineTextInvalidPageNumTest", PageLineText, [-1, 8, "Example text"], false);
-constructorTestRunner("pageLineTextInvalidLineNumTest", PageLineText, [31, -1, "Example text"], false);
+constructorTestRunner(
+        "pageLineTextUndefinedArgTest", PageLineText, [undefined, undefined, undefined], false);
+constructorTestRunner(
+        "pageLineTextInvalidPageNumTest", PageLineText, [-1, 8, "Example text"], false);
+constructorTestRunner(
+        "pageLineTextInvalidLineNumTest", PageLineText, [31, -1, "Example text"], false);
 constructorTestRunner("pageLineTextInvalidTextTest", PageLineText, [31, -1, null], false);
 
 // Extremity tests
 constructorTestRunner("pageLinePage0Line1Test", PageLineText, [0, 1, ""], false);
 constructorTestRunner("pageLinePage1Line0Test", PageLineText, [1, 0, ""], false);
-constructorTestRunner("pageLinePage1LineMaxIntegerTest", PageLineText, [1, Number.MAX_SAFE_INTEGER, ""], true);
+constructorTestRunner(
+        "pageLinePage1LineMaxIntegerTest", PageLineText, [1, Number.MAX_SAFE_INTEGER, ""], true);
 
 // Tests for SearchResult class
 console.warn("Testing SearchResult class");
@@ -643,11 +692,14 @@ constructorTestRunner("searchResultNullTest", SearchResult, [null, null, null], 
 constructorTestRunner("searchResultNullTest", SearchResult, [null, 8, "978000052831"], false);
 constructorTestRunner("searchResultNullTest", SearchResult, [31, null, "978000052831"], false);
 constructorTestRunner("searchResultNullTest", SearchResult, [31, 8, null], false);
-constructorTestRunner("searchResultUndefinedTest", SearchResult, [undefined, undefined, undefined], false);
+constructorTestRunner(
+        "searchResultUndefinedTest", SearchResult, [undefined, undefined, undefined], false);
 constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, "978000052831"], false);
 constructorTestRunner("searchResultInvalidISBNTest", SearchResult, [31, 8, 9780000528531], false);
-constructorTestRunner("searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9780000528531"], false);
-constructorTestRunner("searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
+constructorTestRunner(
+        "searchResultInvalidPageNumTest", SearchResult, [-1, 8, "9780000528531"], false);
+constructorTestRunner(
+        "searchResultInvalidLineNumTest", SearchResult, [8, -1, "9780000528531"], false);
 
 // Tests for findSearchTermInBooks()
 console.warn("Testing findSearchTermInBooks()");
@@ -698,7 +750,8 @@ const caseSensitiveSuccessTestExpected = {
     ]
 };
 const caseSensitiveSuccessTest = findSearchTermInBooks("profound", twentyLeaguesIn);
-if (JSON.stringify(caseSensitiveSuccessTestExpected) === JSON.stringify(caseSensitiveSuccessTest)) {
+if (JSON.stringify(caseSensitiveSuccessTestExpected) === 
+        JSON.stringify(caseSensitiveSuccessTest)) {
     console.log("PASS: Case sensitive success test |", JSON.stringify(caseSensitiveSuccessTest));
 } else {
     console.error("FAIL: Case sensitive success test");
@@ -759,7 +812,8 @@ const findLineBreakTermTestExpected = {
         }
     ]
 };
-if (JSON.stringify(findLineBreakTermTestExpected) === JSON.stringify(findLineBreakTermTest)) {
+if (JSON.stringify(findLineBreakTermTestExpected) === 
+        JSON.stringify(findLineBreakTermTest)) {
     console.log("PASS: Find line-breaked term test |", findLineBreakTermTest)
 } else {
     console.error("FAIL: Find line-breaked term test");
@@ -791,7 +845,8 @@ const findHyphenatedTermTestExpected = {
         }
     ]
 };
-if (JSON.stringify(findHyphenatedTermTestExpected) === JSON.stringify(findHyphenatedTermTest)) {
+if (JSON.stringify(findHyphenatedTermTestExpected) === 
+        JSON.stringify(findHyphenatedTermTest)) {
     console.log("PASS: Find hyphenated term test |", findHyphenatedTermTest);
 } else {
     console.error("FAIL: Find hyphenated term test");
@@ -810,7 +865,8 @@ const findAccentedTermTestExpected = {
         }
     ]
 };
-if (JSON.stringify(findAccentedTermTestExpected) === JSON.stringify(findAccentedTermTest)) {
+if (JSON.stringify(findAccentedTermTestExpected) === 
+        JSON.stringify(findAccentedTermTest)) {
     console.log("PASS: Find accented term test |", findAccentedTermTest);
 } else {
     console.error("FAIL: Find accented term test");
@@ -829,7 +885,8 @@ const findTermWithSpaceTestExpected = {
         }
     ]
 };
-if (JSON.stringify(findTermWithSpaceTestExpected) === JSON.stringify(findTermWithSpaceTest)) {
+if (JSON.stringify(findTermWithSpaceTestExpected) === 
+        JSON.stringify(findTermWithSpaceTest)) {
     console.log("PASS: Find term with space test |", findTermWithSpaceTest);
 } else {
     console.error("FAIL: Find term with space test");
@@ -934,7 +991,8 @@ const findTermInMultipleBooksTestExpected = {
         }
     ]
 };
-if (JSON.stringify(findTermInMultipleBooksTestExpected) === JSON.stringify(findTermInMultipleBooksTest)) {
+if (JSON.stringify(findTermInMultipleBooksTestExpected) === 
+        JSON.stringify(findTermInMultipleBooksTest)) {
     console.log("PASS: Find term in multiple books test |", findLineBreakTermTest);
 } else {
     console.error("FAIL: Find term in multiple books test");
