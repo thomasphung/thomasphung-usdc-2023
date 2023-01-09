@@ -149,11 +149,6 @@ class Book {
      */
     searchForTerm(searchTerm) {
         let resultArr = [];
-        // Issue with security if user puts in a searchTerm with regex tokens,
-        // must escape these tokens
-        // @todo Periods and asterisks may be treated as wildcards
-        // let escapedSearchTerm = JSON.stringify(searchTerm).slice(1, -1);
-        // let regex = new RegExp(`(${searchTerm})`);
         // Support for contractions, possessive nouns, and hyphenated words.
         // Including support for accented Latin characters because there are valid
         // spellings of English words that use diacritical marks like "résumé"
