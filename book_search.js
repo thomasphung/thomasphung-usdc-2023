@@ -105,6 +105,8 @@ class Book {
 
     /**
      * Validates ISBN based on official ISBN spec.
+     * Static function since its purpose is independent of Book object but is within scope of books.
+     * (i.e. don't need to instantiate a book object to validate ISBN values)
      * @param {string} isbn - ISBN
      * @returns {boolean} - True if isbn is a valid ISBN with 10 or 13 digits and no delimiters; false otherwise
      */
@@ -152,7 +154,10 @@ class Book {
         // @todo Periods and asterisks may be treated as wildcards
         // let escapedSearchTerm = JSON.stringify(searchTerm).slice(1, -1);
         // let regex = new RegExp(`(${searchTerm})`);
-        let wordRegex = new RegExp(/\b[A-z']+\b/g);
+        // Support for contractions, possessive nouns, and hyphenated words.
+        // Including support for accented Latin characters because there are valid
+        // spellings of English words that use diacritical marks like "résumé"
+        let wordRegex = new RegExp(/[A-Za-z'\-À-ÖØ-Ýà-öø-ÿ]+/g);
 
         // Cannot assume Object.keys are ordered in ascending alphanumerical order.
         // Though in modern ECMAScript specification, all non-negative integer keys are
@@ -489,9 +494,9 @@ const test1result = findSearchTermInBooks("the", twentyLeaguesIn);
 if (JSON.stringify(twentyLeaguesOut) === JSON.stringify(test1result)) {
     console.log("PASS: Test 1");
 } else {
-    console.log("FAIL: Test 1");
-    console.log("Expected:", twentyLeaguesOut);
-    console.log("Received:", test1result);
+    console.error("FAIL: Test 1");
+    console.error("Expected:", twentyLeaguesOut);
+    console.error("Received:", test1result);
 }
 
 /** We could choose to check that we get the right number of results. */
@@ -499,9 +504,9 @@ const test2result = findSearchTermInBooks("the", twentyLeaguesIn);
 if (test2result.Results.length == 1) {
     console.log("PASS: Test 2");
 } else {
-    console.log("FAIL: Test 2");
-    console.log("Expected:", twentyLeaguesOut.Results.length);
-    console.log("Received:", test2result.Results.length);
+    console.error("FAIL: Test 2");
+    console.error("Expected:", twentyLeaguesOut.Results.length);
+    console.error("Received:", test2result.Results.length);
 }
 
 /**
@@ -548,6 +553,7 @@ constructorTestRunner("bookEmptyTitleTest", Book, ["", "9780000528531", []], fal
 constructorTestRunner("bookInvalidContentTest", Book, ["Example title", "9780000528531", ["Hello There"]], false);
 constructorTestRunner("bookInvalidISBNTest", Book, ["Example title", "1", []], false);
 
+// Tests for static ISBN validation function
 if (Book.validateISBN("0000000000000")) {
     console.log("PASS:", "book13DigitISBNValidateTest");
 } else {
@@ -558,6 +564,12 @@ if (Book.validateISBN("0000000000")) {
     console.log("PASS:", "book10DigitISBNValidateTest");
 } else {
     console.error("FAIL:", "book10DigitISBNValidateTest");
+}
+
+if (!Book.validateISBN("978-0000528531")) {
+    console.log("PASS:", "bookISBNDelimiterValidateTest");
+} else {
+    console.error("FAIL:", "bookISBNDelimiterValidateTest");
 }
 
 if (!Book.validateISBN("123")) {
@@ -613,6 +625,15 @@ constructorTestRunner("searchResultInvalidLineNumTest", SearchResult, [8, -1, "9
 
 // Tests for findSearchTermInBooks()
 console.warn("Testing findSearchTermInBooks()");
+const emptyInputTest = findSearchTermInBooks("the", []);
+if (emptyInputTest.Results.length === 0) {
+    console.log("PASS: Empty input test");
+} else {
+    console.error("FAIL: Empty input test");
+    console.error("Expected:", JSON.stringify([]));
+    console.error("Received:", JSON.stringify(emptyInputTest.Results));
+}
+
 const noResultTest = findSearchTermInBooks("Supercalifragilistic", twentyLeaguesIn);
 if (noResultTest.Results.length === 0) {
     console.log("PASS: No result test");
@@ -643,11 +664,30 @@ const caseSensitiveSuccessTestExpected = {
 };
 const caseSensitiveSuccessTest = findSearchTermInBooks("profound", twentyLeaguesIn);
 if (JSON.stringify(caseSensitiveSuccessTestExpected) === JSON.stringify(caseSensitiveSuccessTest)) {
-    console.log("PASS: Case sensitive success test |", JSON.stringify(caseSensitiveSuccessTest.Results));
+    console.log("PASS: Case sensitive success test |", JSON.stringify(caseSensitiveSuccessTest));
 } else {
     console.error("FAIL: Case sensitive success test");
     console.error("Expected:", JSON.stringify(caseSensitiveSuccessTestExpected));
-    console.error("Received:", JSON.stringify(caseSensitiveSuccessTest.Results));
+    console.error("Received:", JSON.stringify(caseSensitiveSuccessTest));
+}
+
+const contractionTest = findSearchTermInBooks("Canadian's", twentyLeaguesIn);
+const constractionTestExpected = {
+    "SearchTerm": "Canadian's",
+    "Results": [
+        {
+            "ISBN": "9780000528531",
+            "Page": 31,
+            "Line": 9
+        }
+    ]
+};
+if (JSON.stringify(constractionTestExpected) === JSON.stringify(contractionTest)) {
+    console.log("PASS: Contraction and possessive nouns test");
+} else {
+    console.error("FAIL: Contraction and possessive nouns test");
+    console.error("Expected:", JSON.stringify(constractionTestExpected));
+    console.error("Received:", JSON.stringify(contractionTest.Results));
 }
 
 const substringOfWordTest = findSearchTermInBooks("Canadian", twentyLeaguesIn);
@@ -657,6 +697,15 @@ if (substringOfWordTest.Results.length === 0) {
     console.error("FAIL: Substring of word test");
     console.error("Expected:", JSON.stringify([]));
     console.error("Received:", JSON.stringify(substringOfWordTest.Results));
+}
+
+const substringOfLineBreakWordTest = findSearchTermInBooks("dark", twentyLeaguesIn);
+if (substringOfLineBreakWordTest.Results.length === 0) {
+    console.log("PASS: Substring of line-breaked word test");
+} else {
+    console.error("FAIL: Substring of line-breaked word test");
+    console.error("Expected:", JSON.stringify([]));
+    console.error("Received:", JSON.stringify(substringOfLineBreakWordTest.Results));
 }
 
 const findLineBreakTermTest = findSearchTermInBooks("darkness", twentyLeaguesIn);
@@ -676,11 +725,81 @@ const findLineBreakTermTestExpected = {
     ]
 };
 if (JSON.stringify(findLineBreakTermTestExpected) === JSON.stringify(findLineBreakTermTest)) {
-    console.log("PASS: Find line breaked term test |", findLineBreakTermTest)
+    console.log("PASS: Find line-breaked term test |", findLineBreakTermTest)
 } else {
-    console.error("FAIL: Find line breaked term test");
+    console.error("FAIL: Find line-breaked term test");
     console.error("Expected:", JSON.stringify(findLineBreakTermTestExpected));
     console.error("Received:", JSON.stringify(findLineBreakTermTest));
+}
+
+const sampleBook = [
+    {
+        "Title": "Example title",
+        "ISBN": "9780618260300",
+        "Content": [
+            {
+                "Page": 1,
+                "Line": 1,
+                "Text": "This is a déjà vu story about a pre-owned toy with a résumé"
+            }
+        ]
+    }
+];
+const findHyphenatedTermTest = findSearchTermInBooks("pre-owned", sampleBook);
+const findHyphenatedTermTestExpected = {
+    "SearchTerm": "pre-owned",
+    "Results": [
+        {
+            "ISBN": "9780618260300",
+            "Page": 1,
+            "Line": 1
+        }
+    ]
+};
+if (JSON.stringify(findHyphenatedTermTestExpected) === JSON.stringify(findHyphenatedTermTest)) {
+    console.log("PASS: Find hyphenated term test |", findHyphenatedTermTest);
+} else {
+    console.error("FAIL: Find hyphenated term test");
+    console.error("Expected:", JSON.stringify(findHyphenatedTermTestExpected));
+    console.error("Received:", JSON.stringify(findHyphenatedTermTest));
+}
+
+const findAccentedTermTest = findSearchTermInBooks("résumé", sampleBook);
+const findAccentedTermTestExpected = {
+    "SearchTerm": "résumé",
+    "Results": [
+        {
+            "ISBN": "9780618260300",
+            "Page": 1,
+            "Line": 1
+        }
+    ]
+};
+if (JSON.stringify(findAccentedTermTestExpected) === JSON.stringify(findAccentedTermTest)) {
+    console.log("PASS: Find accented term test |", findAccentedTermTest);
+} else {
+    console.error("FAIL: Find accented term test");
+    console.error("Expected:", JSON.stringify(findAccentedTermTestExpected));
+    console.error("Received:", JSON.stringify(findAccentedTermTest));
+}
+
+const findTermWithSpaceTest = findSearchTermInBooks("déjà vu", sampleBook);
+const findTermWithSpaceTestExpected = {
+    "SearchTerm": "déjà vu",
+    "Results": [
+        {
+            "ISBN": "9780618260300",
+            "Page": 1,
+            "Line": 1
+        }
+    ]
+};
+if (JSON.stringify(findTermWithSpaceTestExpected) === JSON.stringify(findTermWithSpaceTest)) {
+    console.log("PASS: Find term with space test |", findTermWithSpaceTest);
+} else {
+    console.error("FAIL: Find term with space test");
+    console.error("Expected:", JSON.stringify(findTermWithSpaceTestExpected));
+    console.error("Received:", JSON.stringify(findTermWithSpaceTest));
 }
 
 const lordOfTheRings = [
@@ -741,6 +860,11 @@ const lordOfTheRings = [
                 "Text": "'So that was the job I felt I had to do when I started,' thought Sam: 'to"
             }
         ] 
+    },
+    {
+        "Title": "The Hobbit",
+        "ISBN": "0618260307",
+        "Content": []
     }
 ];
 const findTermInMultipleBooksTest = findSearchTermInBooks("I", lordOfTheRings);
@@ -765,7 +889,7 @@ const findTermInMultipleBooksTestExpected = {
     ]
 };
 if (JSON.stringify(findTermInMultipleBooksTestExpected) === JSON.stringify(findTermInMultipleBooksTest)) {
-    console.log("PASS: Find term in multiple books test |", findLineBreakTermTest)
+    console.log("PASS: Find term in multiple books test |", findLineBreakTermTest);
 } else {
     console.error("FAIL: Find term in multiple books test");
     console.error("Expected:", JSON.stringify(findTermInMultipleBooksTestExpected));
