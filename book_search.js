@@ -173,9 +173,7 @@ class Book {
             lineNumArr = lineNumArr.sort(comparator);
 
             for (const lineNum of lineNumArr) {
-                let lineText = this.#contentArr[pageNum][lineNum].text;
-                
-                this.#addSearchResult(pageNum, lineNum, lineText, searchTerm, resultArr);
+                this.#addSearchResult(this.#contentArr[pageNum][lineNum], searchTerm, resultArr);
             }
         }
         return resultArr;
@@ -183,26 +181,26 @@ class Book {
 
     /**
      * Adds any search term matches to result array.
-     * @param {string} pageNum - Page number key
-     * @param {string} lineNum - Line number key
-     * @param {string} lineText - Line text
+     * @param {PageLineText} pageLineTextObj - Current PageLineText object
      * @param {string} searchTerm - Search term
      * @param {object} resultArr - Result array, is modified if a match is found
      */
-    #addSearchResult(pageNum, lineNum, lineText, searchTerm, resultArr) {
+    #addSearchResult(pageLineTextObj, searchTerm, resultArr) {
+        let lineText = pageLineTextObj.text;
         // Finding individual words within line
-        let wordArr = lineText.match(this.#WORD_REGEX);
-        console.log(wordArr);
-
+        // If string.match returns null, default to empty array
+        let wordArr = lineText.match(this.#WORD_REGEX) ?? [];
+        
         // Second conditional is for cases where user search term is a case-sensitive 
         // phrase like "Hello World".
         // Else statement tries to see if search term is hyphen-breaked
         if (wordArr.includes(searchTerm)) {
-            resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
+            resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
         } else if (searchTerm.includes(" ") && lineText.includes(searchTerm)) {
-            resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
+            resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
         } else {
-            let subsequentLine = this.#contentArr[pageNum][lineNum + 1];
+            // Note that Object[1] is the same as Object["1"] since property names are stored as strings
+            let subsequentLine = this.#contentArr[pageLineTextObj.page][pageLineTextObj.line + 1];
             let subsequentLineText = null;
             if (!isNull(subsequentLine)) {
                 subsequentLineText = subsequentLine.text;
@@ -218,7 +216,8 @@ class Book {
                  * (e.g. we don't know the max number of lines on a page, there is no data that
                  * maps to this or we can derive from)
                  */
-                resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum + 1), this.#isbn));
+                resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line, this.#isbn));
+                resultArr.push(new SearchResult(pageLineTextObj.page, pageLineTextObj.line + 1, this.#isbn));
             }
         }
     }
@@ -236,16 +235,34 @@ class Book {
             return false;
         }
 
-        let lineEnd = currentLineText.split(" ").pop().replace("-$", "");
-        
+        let lineEnd = currentLineText.match(this.#WORD_REGEX).pop()?.replace("-", "");
+        console.log(lineEnd);
+        // If current line of text ends with a substring of first part of search term
+        // and next line of text starts with the rest of search term, that means
+        // we found a word that has been hyphen-breaked
         if (searchTerm.startsWith(lineEnd)) {
-            let subsequentLineStart = subsequentLineText.split(" ").shift();
+            // Cannot use string.endsWith in case a different term can be matched.
+            // Have to substring extract what's left over to match
+            // E.g. The hyphen-breaked "be-e" will give a false positive match
+            // to search term "because"
+            let startIndex = lineEnd.length;
+            let leftOverStr = searchTerm.substring(startIndex);
 
-            if (searchTerm.endsWith(subsequentLineStart)) {
+            let subsequentLineStart = subsequentLineText.match(this.#WORD_REGEX).shift();
+
+            if (leftOverStr === subsequentLineStart) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * String representation of scanned book's contents.
+     * @returns {string} - JSON string of book's content
+     */
+    toString() {
+        return JSON.stringify(this.#contentArr);
     }
 }
 
