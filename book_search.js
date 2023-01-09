@@ -1013,7 +1013,7 @@ const findTermInMultipleBooksTestExpected = {
 };
 if (JSON.stringify(findTermInMultipleBooksTestExpected) === 
         JSON.stringify(findTermInMultipleBooksTest)) {
-    console.log("PASS: Find term in multiple books test |", findLineBreakTermTest);
+    console.log("PASS: Find term in multiple books test |", findTermInMultipleBooksTest);
 } else {
     console.error("FAIL: Find term in multiple books test");
     console.error("Expected:", JSON.stringify(findTermInMultipleBooksTestExpected));
