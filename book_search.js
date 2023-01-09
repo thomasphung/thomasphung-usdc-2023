@@ -829,7 +829,7 @@ const sampleBook = [
             {
                 "Page": 1,
                 "Line": 1,
-                "Text": "This is a déjà vu story about a pre-owned toy with a résumé"
+                "Text": "This is a déjà vu story about a pre-owned toy story with a résumé"
             }
         ]
     }
@@ -892,6 +892,26 @@ if (JSON.stringify(findTermWithSpaceTestExpected) ===
     console.error("FAIL: Find term with space test");
     console.error("Expected:", JSON.stringify(findTermWithSpaceTestExpected));
     console.error("Received:", JSON.stringify(findTermWithSpaceTest));
+}
+
+const findRepeatedTermTest = findSearchTermInBooks("story", sampleBook);
+const findRepeatedTermTestExpected = {
+    "SearchTerm": "story",
+    "Results": [
+        {
+            "ISBN": "9780618260300",
+            "Page": 1,
+            "Line": 1
+        }
+    ]
+};
+if (JSON.stringify(findRepeatedTermTestExpected) === 
+        JSON.stringify(findRepeatedTermTest)) {
+    console.log("PASS: Find repeated term in same line test |", findRepeatedTermTest);
+} else {
+    console.error("FAIL: Find repeated term in same line test");
+    console.error("Expected:", JSON.stringify(findRepeatedTermTestExpected));
+    console.error("Received:", JSON.stringify(findRepeatedTermTest));
 }
 
 const lordOfTheRings = [
