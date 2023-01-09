@@ -50,6 +50,11 @@ class Book {
     // #PUNCTUATION_MARKS = [ " ", ",", ".", "?", "!", ":", ";", "(", ")", "[", "]", "\"", "/", "—"];
     // #PUNCTUATION_REGEX = new RegExp("[" + this.#PUNCTUATION_MARKS.join("\\") + "?]");
 
+    // Support for contractions, possessive nouns, and hyphenated words.
+    // Including support for accented Latin characters because there are valid
+    // spellings of English words that use diacritical marks like "résumé"
+    #WORD_REGEX = new RegExp(/[A-Za-z'\-À-ÖØ-Ýà-öø-ÿ]+/g);
+
     /**
      * Constructs a new Book object.
      * @param {string} title - book's title
@@ -149,10 +154,6 @@ class Book {
      */
     searchForTerm(searchTerm) {
         let resultArr = [];
-        // Support for contractions, possessive nouns, and hyphenated words.
-        // Including support for accented Latin characters because there are valid
-        // spellings of English words that use diacritical marks like "résumé"
-        let wordRegex = new RegExp(/[A-Za-z'\-À-ÖØ-Ýà-öø-ÿ]+/g);
 
         // Cannot assume Object.keys are ordered in ascending alphanumerical order.
         // Though in modern ECMAScript specification, all non-negative integer keys are
@@ -173,40 +174,53 @@ class Book {
 
             for (const lineNum of lineNumArr) {
                 let lineText = this.#contentArr[pageNum][lineNum].text;
-                // Finding individual words within line
-                let wordArr = lineText.match(wordRegex);
-                console.log(wordArr);
-
-                // Second conditional is for cases where user search term is a case-sensitive 
-                // phrase like "Hello World".
-                // Else statement tries to see if search term is hyphen-breaked
-                if (wordArr.includes(searchTerm)) {
-                    resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
-                } else if (searchTerm.includes(" ") && lineText.includes(searchTerm)) {
-                    resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
-                } else {
-                    let subsequentLine = this.#contentArr[pageNum][lineNum + 1];
-                    let subsequentLineText = null;
-                    if (!isNull(subsequentLine)) {
-                        subsequentLineText = subsequentLine.text;
-                    }
-
-                    if (this.#searchForLineBreakedTerm(searchTerm, lineText, subsequentLineText)) {
-                        /**
-                         * If there is a word that wraps to the next line (i.e. is hyphen-breaked),
-                         * perform a look ahead check.
-                         * 
-                         * If the word wraps to the first line of the next page, then
-                         * currently there is no way to confirm if this is the case with current knowledge
-                         * (e.g. we don't know the max number of lines on a page, there is no data that
-                         * maps to this or we can derive from)
-                         */
-                        resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum + 1), this.#isbn));
-                    }
-                }
+                
+                this.#addSearchResult(pageNum, lineNum, lineText, searchTerm, resultArr);
             }
         }
         return resultArr;
+    }
+
+    /**
+     * Adds any search term matches to result array.
+     * @param {string} pageNum - Page number key
+     * @param {string} lineNum - Line number key
+     * @param {string} lineText - Line text
+     * @param {string} searchTerm - Search term
+     * @param {object} resultArr - Result array, is modified if a match is found
+     */
+    #addSearchResult(pageNum, lineNum, lineText, searchTerm, resultArr) {
+        // Finding individual words within line
+        let wordArr = lineText.match(this.#WORD_REGEX);
+        console.log(wordArr);
+
+        // Second conditional is for cases where user search term is a case-sensitive 
+        // phrase like "Hello World".
+        // Else statement tries to see if search term is hyphen-breaked
+        if (wordArr.includes(searchTerm)) {
+            resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
+        } else if (searchTerm.includes(" ") && lineText.includes(searchTerm)) {
+            resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum), this.#isbn));
+        } else {
+            let subsequentLine = this.#contentArr[pageNum][lineNum + 1];
+            let subsequentLineText = null;
+            if (!isNull(subsequentLine)) {
+                subsequentLineText = subsequentLine.text;
+            }
+
+            if (this.#searchForLineBreakedTerm(searchTerm, lineText, subsequentLineText)) {
+                /**
+                 * If there is a word that wraps to the next line (i.e. is hyphen-breaked),
+                 * perform a look ahead check.
+                 * 
+                 * If the word wraps to the first line of the next page, then
+                 * currently there is no way to confirm if this is the case with current knowledge
+                 * (e.g. we don't know the max number of lines on a page, there is no data that
+                 * maps to this or we can derive from)
+                 */
+                resultArr.push(new SearchResult(Number.parseInt(pageNum), Number.parseInt(lineNum + 1), this.#isbn));
+            }
+        }
     }
 
     /**
@@ -647,6 +661,15 @@ if (caseSensitiveFailTest.Results.length === 0) {
     console.error("Received:", JSON.stringify(caseSensitiveFailTest.Results));
 }
 
+const caseSensitiveFailAllCapsTest = findSearchTermInBooks("PROFOUND", twentyLeaguesIn);
+if (caseSensitiveFailAllCapsTest.Results.length === 0) {
+    console.log("PASS: Case sensitive all capital letters fail test");
+} else {
+    console.error("FAIL: Case sensitive all capital letters fail test");
+    console.error("Expected:", JSON.stringify([]));
+    console.error("Received:", JSON.stringify(caseSensitiveFailAllCapsTest.Results));
+}
+
 const caseSensitiveSuccessTestExpected = {
     "SearchTerm": "profound",
     "Results": [
@@ -860,6 +883,17 @@ const lordOfTheRings = [
         "Title": "The Hobbit",
         "ISBN": "0618260307",
         "Content": []
+    },
+    {
+        "Title": "The Silmarillion",
+        "ISBN": "0618126988",
+        "Content": [
+            {
+                "Page": 1,
+                "Line": 1,
+                "Text": ""
+            }
+        ]
     }
 ];
 const findTermInMultipleBooksTest = findSearchTermInBooks("I", lordOfTheRings);
