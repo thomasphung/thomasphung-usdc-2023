@@ -760,7 +760,7 @@ if (JSON.stringify(caseSensitiveSuccessTestExpected) ===
 }
 
 const contractionTest = findSearchTermInBooks("Canadian's", twentyLeaguesIn);
-const constractionTestExpected = {
+const contractionTestExpected = {
     "SearchTerm": "Canadian's",
     "Results": [
         {
@@ -770,11 +770,11 @@ const constractionTestExpected = {
         }
     ]
 };
-if (JSON.stringify(constractionTestExpected) === JSON.stringify(contractionTest)) {
+if (JSON.stringify(contractionTestExpected) === JSON.stringify(contractionTest)) {
     console.log("PASS: Contraction and possessive nouns test");
 } else {
     console.error("FAIL: Contraction and possessive nouns test");
-    console.error("Expected:", JSON.stringify(constractionTestExpected));
+    console.error("Expected:", JSON.stringify(contractionTestExpected));
     console.error("Received:", JSON.stringify(contractionTest.Results));
 }
 
